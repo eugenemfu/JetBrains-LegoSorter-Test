@@ -49,7 +49,7 @@ public class Task2 {
             for (int i = 0; i < n - 1; i++) {
                 char prev = names.get(i).charAt(j);
                 char next = names.get(i + 1).charAt(j);
-                if (prev != next && ! letterChanged.get(i)) { // j-й символ поменялся, а левые части имён одинаковы
+                if (prev != next && !letterChanged.get(i)) { // j-й символ поменялся, а левые части имён одинаковы
                     letterChanged.set(i, true); // в будущем левые части этих имен уже не будут одинаковы
                     graph.get(prev).add(next); // проводим ребро
                 }
@@ -58,35 +58,48 @@ public class Task2 {
 
         // делаем топологическую сортировку графа, это и будет алфавит
         // там же ищем циклы, если найдем, то нужного алфавита не существует
+        boolean foundCycle = false;
         for (char c = 'z'; c >= empty; c--) {
             if (visited.get(c) == 0) {
-                dfs(graph, visited, topOrder, c);
+                foundCycle = dfs(graph, visited, topOrder, c);
+                if (foundCycle) {
+                    break;
+                }
             }
         }
 
-        topOrder.remove(empty);
-        List<Map.Entry<Character, Integer>> orderList = new ArrayList<>(topOrder.entrySet());
-        orderList.sort(Map.Entry.comparingByValue());
-        for (Map.Entry<Character, Integer> entry : orderList) {
-            System.out.print(entry.getKey());
+        if (foundCycle) {
+            System.out.println("Impossible");
+        } else {
+            topOrder.remove(empty);
+            List<Map.Entry<Character, Integer>> orderList = new ArrayList<>(topOrder.entrySet());
+            orderList.sort(Map.Entry.comparingByValue());
+            for (Map.Entry<Character, Integer> entry : orderList) {
+                System.out.print(entry.getKey());
+            }
         }
-
     }
 
     static int k = 100;
 
-    static void dfs(Map<Character, Set<Character>> graph, Map<Character, Integer> visited, Map<Character, Integer> topOrder, char start) {
+    static boolean dfs(Map<Character, Set<Character>> graph, Map<Character, Integer> visited, Map<Character, Integer> topOrder, char start) {
         visited.put(start, 1);
+        boolean foundCycle = false;
         for (char next : graph.get(start)) {
             if (visited.get(next) == 0) {
-                dfs(graph, visited, topOrder, next);
-            } else if (visited.get(next) == 1) {    // нашли цикл
-                System.out.println("Impossible");
-                System.exit(0);
+                foundCycle = dfs(graph, visited, topOrder, next);
+            } else if (visited.get(next) == 1) { // нашли цикл
+                foundCycle = true;
+            }
+            if (foundCycle) {
+                break;
             }
         }
-        visited.put(start, 2);
-        topOrder.put(start, k);
-        k--;
+        if (!foundCycle) {
+            visited.put(start, 2);
+            topOrder.put(start, k);
+            k--;
+        }
+        return foundCycle;
     }
 }
